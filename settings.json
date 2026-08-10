@@ -1,0 +1,58 @@
+{
+ 
+  "videos_per_search": 5,
+  "videos_shown_per_game": 10,
+  "videos_to_analyze_per_game": 5,
+  "comments_per_video": 50,
+
+
+  "games": {
+    "Pokemon": [
+      "Pokemon TCG new release",
+      "Pokemon TCG upcoming set",
+      "Pokemon TCG market",
+      "Pokemon TCG restock",
+      "Pokemon TCG preorder",
+      "Pokemon TCG investment"
+    ],
+    "Magic": [
+      "MTG new release",
+      "MTG finance",
+      "MTG Secret Lair",
+      "Magic the Gathering market",
+      "MTG preorder"
+    ],
+    "Lorcana": [
+      "Lorcana new release",
+      "Lorcana market",
+      "Lorcana preorder",
+      "Lorcana investment"
+    ],
+    "One Piece": [
+      "One Piece TCG new release",
+      "One Piece TCG market",
+      "One Piece TCG preorder"
+    ],
+    "Yu-Gi-Oh": [
+      "YuGiOh TCG new release",
+      "YuGiOh card market",
+      "YuGiOh preorder"
+    ],
+    "Flesh and Blood": [
+      "Flesh and Blood TCG new release",
+      "Flesh and Blood market"
+    ],
+    "Star Wars Unlimited": [
+      "Star Wars Unlimited TCG new release",
+      "Star Wars Unlimited market"
+    ],
+    "Digimon": [
+      "Digimon TCG new release",
+      "Digimon TCG market"
+    ],
+    "Riftbound": [
+      "Riftbound TCG new release",
+      "Riftbound market"
+    ]
+  }
+}
