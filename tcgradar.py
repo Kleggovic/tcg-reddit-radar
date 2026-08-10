@@ -3,31 +3,29 @@ from pathlib import Path
 
 from youtube_collector import run_youtube_scan
 from youtube_comments import run_comment_collection
+
 from youtube_analyzer import (
     analyze_database,
     print_market_report
+)
+
+from product_analyzer import (
+    analyze_all_products,
+    print_product_report
 )
 
 from youtube_database import create_youtube_tables
 
 
 # ============================================================
-#                     TCG RADAR
+#                         TCG RADAR
 # ============================================================
 #
-# This is now the MAIN PROGRAM.
+# MAIN PROGRAM
 #
-# Normally you only run:
+# Normally you only need to run:
 #
 #       python tcgradar.py
-#
-# From here you can:
-#
-# - check the database
-# - perform a fresh YouTube scan
-# - collect comments
-# - analyze saved information
-# - run the entire daily pipeline
 #
 # ============================================================
 
@@ -42,18 +40,10 @@ DATABASE_FILE = PROJECT_FOLDER / "tcg_radar.db"
 
 def show_database_status():
 
-    """
-    Shows how much YouTube information is currently saved.
-
-    This uses ZERO API quota.
-    """
-
     create_youtube_tables()
 
     connection = sqlite3.connect(DATABASE_FILE)
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT COUNT(*)
@@ -62,14 +52,12 @@ def show_database_status():
 
     video_count = cursor.fetchone()[0]
 
-
     cursor.execute("""
         SELECT COUNT(*)
         FROM youtube_comments
     """)
 
     comment_count = cursor.fetchone()[0]
-
 
     cursor.execute("""
         SELECT game, COUNT(*)
@@ -80,9 +68,7 @@ def show_database_status():
 
     games = cursor.fetchall()
 
-
     connection.close()
-
 
     print()
     print("=" * 60)
@@ -93,7 +79,6 @@ def show_database_status():
     print(f"Saved YouTube videos:   {video_count}")
     print(f"Saved YouTube comments: {comment_count}")
 
-
     if games:
 
         print()
@@ -101,68 +86,56 @@ def show_database_status():
         print("-" * 30)
 
         for game, count in games:
-
-            print(
-                f"{game:<25} {count}"
-            )
-
-
-    if video_count == 0:
-
-        print()
-        print(
-            "No YouTube discovery data has been saved yet."
-        )
-
-        print(
-            "A fresh YouTube scan will be required "
-            "after your search quota resets."
-        )
-
+            print(f"{game:<25} {count}")
 
     print()
     print("=" * 60)
 
 
 # ============================================================
-# ANALYZE SAVED INFORMATION
+# GENERAL MARKET ANALYSIS
 # ============================================================
 
-def run_saved_analysis():
-
-    """
-    Reads ONLY the local database.
-
-    ZERO YouTube API calls.
-    ZERO search quota.
-    """
+def run_market_analysis():
 
     print()
-    print("Analyzing saved market information...")
-
+    print("Analyzing overall TCG market discussion...")
 
     results = analyze_database()
 
-
     if results:
-
-        print_market_report(
-            results
-        )
+        print_market_report(results)
 
 
 # ============================================================
-# FRESH YOUTUBE SEARCH
+# PRODUCT ANALYSIS
+# ============================================================
+
+def run_product_analysis():
+
+    print()
+    print("Analyzing individual products and topics...")
+
+    results = analyze_all_products()
+
+    if results:
+        print_product_report(results)
+
+
+# ============================================================
+# UPDATE COMMENTS
+# ============================================================
+
+def update_comments():
+
+    run_comment_collection()
+
+
+# ============================================================
+# FRESH YOUTUBE DISCOVERY
 # ============================================================
 
 def fresh_youtube_scan():
-
-    """
-    Searches YouTube for new videos.
-
-    WARNING:
-    This uses the limited YouTube search quota.
-    """
 
     print()
     print("=" * 60)
@@ -181,7 +154,6 @@ def fresh_youtube_scan():
         "Run fresh YouTube search? (y/n): "
     ).lower().strip()
 
-
     if confirmation != "y":
 
         print()
@@ -189,24 +161,7 @@ def fresh_youtube_scan():
 
         return
 
-
     run_youtube_scan()
-
-
-# ============================================================
-# UPDATE COMMENTS
-# ============================================================
-
-def update_comments():
-
-    """
-    Downloads comments for videos already discovered.
-
-    This contacts YouTube, but DOES NOT perform
-    expensive YouTube search requests.
-    """
-
-    run_comment_collection()
 
 
 # ============================================================
@@ -215,16 +170,6 @@ def update_comments():
 
 def run_full_daily_scan():
 
-    """
-    Intended eventual daily workflow:
-
-    1. Search YouTube once
-    2. Save videos
-    3. Download comments
-    4. Analyze everything
-    5. Print market intelligence
-    """
-
     print()
     print("=" * 60)
     print("               FULL DAILY TCG SCAN")
@@ -232,7 +177,8 @@ def run_full_daily_scan():
 
     print()
     print(
-        "This WILL use YouTube search quota."
+        "This performs a fresh YouTube search "
+        "and therefore uses search quota."
     )
 
     print()
@@ -240,7 +186,6 @@ def run_full_daily_scan():
     confirmation = input(
         "Start full daily scan? (y/n): "
     ).lower().strip()
-
 
     if confirmation != "y":
 
@@ -251,60 +196,74 @@ def run_full_daily_scan():
 
 
     # --------------------------------------------------------
-    # STEP 1 - DISCOVER VIDEOS
+    # STEP 1
+    # Discover current YouTube videos
     # --------------------------------------------------------
 
     print()
-    print("[1/3] Searching YouTube...")
+    print("[1/4] Discovering new YouTube videos...")
 
     run_youtube_scan()
 
 
     # --------------------------------------------------------
-    # STEP 2 - GET COMMENTS
+    # STEP 2
+    # Collect comments for saved videos
     # --------------------------------------------------------
 
     print()
-    print("[2/3] Collecting comments...")
+    print("[2/4] Collecting community comments...")
 
     run_comment_collection()
 
 
     # --------------------------------------------------------
-    # STEP 3 - ANALYZE
+    # STEP 3
+    # Analyze broad market discussion
     # --------------------------------------------------------
 
     print()
-    print("[3/3] Analyzing market discussion...")
+    print("[3/4] Analyzing market sentiment...")
 
+    market_results = analyze_database()
 
-    results = analyze_database()
-
-
-    if results:
+    if market_results:
 
         print_market_report(
-            results
+            market_results
+        )
+
+
+    # --------------------------------------------------------
+    # STEP 4
+    # Analyze individual products/topics
+    # --------------------------------------------------------
+
+    print()
+    print("[4/4] Analyzing individual products...")
+
+    product_results = analyze_all_products()
+
+    if product_results:
+
+        print_product_report(
+            product_results
         )
 
 
     print()
     print("=" * 60)
-
-    print(
-        "             DAILY TCG SCAN FINISHED"
-    )
-
+    print("             DAILY TCG SCAN FINISHED")
     print("=" * 60)
+    print()
 
 
 # ============================================================
-# MAIN MENU
+# MENU
 # ============================================================
 
 def show_menu():
 
-    print()
     print()
     print("=" * 60)
     print("                     TCG RADAR")
@@ -312,10 +271,11 @@ def show_menu():
 
     print()
     print("1 - Database status")
-    print("2 - Analyze saved market data")
-    print("3 - Update YouTube comments")
-    print("4 - Fresh YouTube discovery scan")
-    print("5 - Full daily scan")
+    print("2 - Overall market analysis")
+    print("3 - Product / topic analysis")
+    print("4 - Update YouTube comments")
+    print("5 - Fresh YouTube discovery scan")
+    print("6 - Full daily scan")
 
     print()
     print("0 - Exit")
@@ -323,86 +283,59 @@ def show_menu():
     print()
     print("-" * 60)
 
-    print(
-        "NOTE: Options 4 and 5 use limited "
-        "YouTube search quota."
-    )
-
-    print(
-        "Options 1 and 2 use no API quota."
-    )
+    print("1, 2 and 3 = local / no API calls")
+    print("4 = YouTube comments, but no search")
+    print("5 and 6 = use limited YouTube search quota")
 
     print("-" * 60)
 
 
 # ============================================================
-# START TCG RADAR
+# START PROGRAM
 # ============================================================
 
 def main():
 
-    # Make sure database exists
     create_youtube_tables()
-
 
     while True:
 
         show_menu()
-
 
         choice = input(
             "\nChoose an option: "
         ).strip()
 
 
-        # ----------------------------------------------------
-        # DATABASE STATUS
-        # ----------------------------------------------------
-
         if choice == "1":
 
             show_database_status()
 
 
-        # ----------------------------------------------------
-        # ANALYZE DATABASE
-        # ----------------------------------------------------
-
         elif choice == "2":
 
-            run_saved_analysis()
+            run_market_analysis()
 
-
-        # ----------------------------------------------------
-        # COMMENTS
-        # ----------------------------------------------------
 
         elif choice == "3":
+
+            run_product_analysis()
+
+
+        elif choice == "4":
 
             update_comments()
 
 
-        # ----------------------------------------------------
-        # FRESH SEARCH
-        # ----------------------------------------------------
-
-        elif choice == "4":
+        elif choice == "5":
 
             fresh_youtube_scan()
 
 
-        # ----------------------------------------------------
-        # FULL PIPELINE
-        # ----------------------------------------------------
-
-        elif choice == "5":
+        elif choice == "6":
 
             run_full_daily_scan()
 
-
-        # ----------------------------------------------------
-        # EXIT
-        # ----------------------------------------------------
 
         elif choice == "0":
 
@@ -413,22 +346,14 @@ def main():
             break
 
 
-        # ----------------------------------------------------
-        # INVALID INPUT
-        # ----------------------------------------------------
-
         else:
 
             print()
             print(
                 "Invalid option. "
-                "Choose 0, 1, 2, 3, 4 or 5."
+                "Choose 0-6."
             )
 
-
-# ============================================================
-# RUN PROGRAM
-# ============================================================
 
 if __name__ == "__main__":
 
